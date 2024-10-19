@@ -4,63 +4,78 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Buku;
-
-        class BukuController extends Controller
-        {
-            /**
-             * Display a listing of the resource.
-             */
-            public function index()
-            {
-            $data_buku = Buku::all(); // Mendapatkan semua data buku
-            $jumlah_buku = Buku::count(); // Menghitung jumlah total buku
-            $total_harga = Buku::sum('harga'); // Menghitung total harga dari semua buku
-            return view('buku.index', compact('data_buku', 'jumlah_buku', 'total_harga')); // Mengirimkan data buku, jumlah buku, dan total harga ke view
-            }
-
-
-
-            /**
-             * Show the form for creating a new resource.
-             */
-            public function create()
-            {
-                return view('buku.create');
-            }
+class BukuController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $data_buku = Buku::all(); // Mendapatkan semua data buku
+        $jumlah_buku = Buku::count(); // Menghitung jumlah total buku
+        $batas = 5;
+        $banyak_buku = Buku::orderBy('id', 'desc')->paginate($batas);
+        $no = $batas * ($banyak_buku->currentPage() - 1);
+        $total_harga = Buku::sum('harga'); // Menghitung total harga dari semua buku
+        
+        // Mengirimkan $banyak_buku ke view juga
+        return view('buku.index', compact('data_buku', 'no', 'jumlah_buku', 'total_harga', 'banyak_buku'));
+    }
+    public function search(Request $request)
+    {
+        $batas = 5;
+        $cari = $request->kata;
+    
+        $banyak_buku = Buku::where('judul', 'like', '%' . $cari . '%')
+            ->orWhere('penulis', 'like', '%' . $cari . '%')
+            ->paginate($batas);
+    
+        $jumlah_buku = $banyak_buku->total(); // Total number of items matching the search
+        $no = $batas * ($banyak_buku->currentPage() - 1);
+    
+        return view('buku.search', compact('jumlah_buku', 'banyak_buku', 'no', 'cari'));
+    }
+    
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('buku.create');
+    }
 
     /**
      * Store a newly created resource in storage.
      */   
-        public function store(Request $request)
-        {
-            $validatedData = $request->validate([
-                'judul' => 'required|string|max:255',
-                'penulis' => 'required|string|max:255',
-                'harga' => 'required|numeric',
-                'tgl_terbit' => 'required|date',
-            ]);
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'judul' => 'required|string|max:255',
+            'penulis' => 'required|string|max:255',
+            'harga' => 'required|numeric',
+            'tgl_terbit' => 'required|date',
+        ]);
 
-            $tambah_buku = Buku::create([
-                'judul' => $validatedData['judul'],
-                'penulis' => $validatedData['penulis'],
-                'harga' => $validatedData['harga'],
-                'tgl_terbit' => $validatedData['tgl_terbit'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $tambah_buku = Buku::create([
+            'judul' => $validatedData['judul'],
+            'penulis' => $validatedData['penulis'],
+            'harga' => $validatedData['harga'],
+            'tgl_terbit' => $validatedData['tgl_terbit'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-            if ($tambah_buku) {
-                return redirect('/buku')->with('success', 'Berhasil menambahkan data');
-            } else {
-                return back()->with('error', 'Data yang diinput gagal');
-            }
+        if ($tambah_buku) {
+            return redirect('/buku')->with('success', 'Berhasil menambahkan data');
+        } else {
+            return back()->with('error', 'Data yang diinput gagal');
         }
+    }
 
-        private function getBuku($id)
-        {
-            return Buku::findOrFail($id);
-        }
-
+    private function getBuku($id)
+    {
+        return Buku::findOrFail($id);
+    }
 
     /**
      * Display the specified resource.
