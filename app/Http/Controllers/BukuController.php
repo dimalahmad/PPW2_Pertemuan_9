@@ -50,10 +50,20 @@ class BukuController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'judul' => 'required|string|max:255',
-            'penulis' => 'required|string|max:255',
-            'harga' => 'required|numeric',
+            'judul' => 'required|string|max:25',
+            'penulis' => 'required|string|max:25',
+            'harga' => 'required|numeric|min:1000|max:999999999',
             'tgl_terbit' => 'required|date',
+        ],[
+            'judul.required' =>"Judul belum diisi",
+            'judul.max' =>"Judul terlalu panjang",
+            'penulis.required' =>"Penulis belum diisi",
+            'penulis.max' =>"Penulis terlalu panjang",
+            'harga.required' =>"Harga belum diisi",
+            'harga.numeric' =>"Harga harus angka",
+            'harga.min' =>"Harga tidak sesuai",
+            'harga.max' =>"Harga terlalu mahal",
+            'date.required' =>"Tanggal belum diisi",
         ]);
 
         $tambah_buku = Buku::create([
